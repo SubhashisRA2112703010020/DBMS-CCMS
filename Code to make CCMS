@@ -1,0 +1,348 @@
+I. CODE
+A.1. USER LOGIN MODULE:
+from tkinter import *
+import sqlite3
+root = Tk()
+root.title("Python: Simple Login Application")
+width = 400
+height = 280
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+x = (screen_width/2) - (width/2)
+y = (screen_height/2) - (height/2)
+root.geometry("%dx%d+%d+%d" % (width, height, x, y))
+root.resizable(0, 0)
+#==============================VARIABLES======================================
+USERNAME = StringVar()
+PASSWORD = StringVar()
+ 
+#==============================FRAMES=========================================
+Top = Frame(root, bd=2,  relief=RIDGE)
+Top.pack(side=TOP, fill=X)
+Form = Frame(root, height=200)
+Form.pack(side=TOP, pady=20)
+ 
+#==============================LABELS=========================================
+lbl_title = Label(Top, text = "Python: Simple Login Application", font=('arial', 15))
+lbl_title.pack(fill=X)
+lbl_username = Label(Form, text = "Username:", font=('arial', 14), bd=15)
+lbl_username.grid(row=0, sticky="e")
+lbl_password = Label(Form, text = "Password:", font=('arial', 14), bd=15)
+lbl_password.grid(row=1, sticky="e")
+lbl_text = Label(Form)
+lbl_text.grid(row=2, columnspan=2)
+ 
+#==============================ENTRY WIDGETS==================================
+username = Entry(Form, textvariable=USERNAME, font=(14))
+username.grid(row=0, column=1)
+password = Entry(Form, textvariable=PASSWORD, show="*", font=(14))
+password.grid(row=1, column=1)
+ 
+#==============================BUTTON WIDGETS=================================
+btn_login = Button(Form, text="Login", width=45, command=Login)
+btn_login.grid(pady=25, row=3, columnspan=2)
+btn_login.bind('<Return>', Login)
+#==============================METHODS========================================
+def Database():
+    global conn, cursor
+    conn = sqlite3.connect("pythontut.db")
+    cursor = conn.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS `member` (mem_id INTEGER NOT NULL PRIMARY KEY  AUTOINCREMENT, username TEXT, password TEXT)")       
+    cursor.execute("SELECT * FROM `member` WHERE `username` = 'admin' AND `password` = 'admin'")
+    if cursor.fetchone() is None:
+        cursor.execute("INSERT INTO `member` (username, password) VALUES('admin', 'admin')")
+        conn.commit()
+        
+def Login(event=None):
+    Database()
+    if USERNAME.get() == "" or PASSWORD.get() == "":
+        lbl_text.config(text="Please complete the required field!", fg="red")
+    else:
+        cursor.execute("SELECT * FROM `member` WHERE `username` = ? AND `password` = ?", (USERNAME.get(), PASSWORD.get()))
+        if cursor.fetchone() is not None:
+            HomeWindow()
+            USERNAME.set("")
+            PASSWORD.set("")
+            lbl_text.config(text="")
+        else:
+            lbl_text.config(text="Invalid username or password", fg="red")
+            USERNAME.set("")
+            PASSWORD.set("")   
+    cursor.close()
+    conn.close()
+ 
+def HomeWindow():
+    global Home
+    root.withdraw()
+    Home = Toplevel()
+    Home.title("Python: Simple Login Application")
+    width = 600
+    height = 500
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width/2) - (width/2)
+    y = (screen_height/2) - (height/2)
+    root.resizable(0, 0)
+    Home.geometry("%dx%d+%d+%d" % (width, height, x, y))
+    lbl_home = Label(Home, text="Successfully Login!", font=('times new roman', 20)).pack()
+    btn_back = Button(Home, text='Back', command=Back).pack(pady=20, fill=X)
+ 
+def Back():
+    Home.destroy()
+    root.deiconify()
+    #==============================INITIALIATION==================================
+if __name__ == '__main__':
+    root.mainloop()
+
+A.2. COMPUTER MANAGEMENT MODULE:
+import tkinter as tk
+import mysql.connector
+# Connect to MySQL database
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="yourusername",
+  password="yourpassword",
+  database="yourdatabase"
+)
+# Create cursor
+mycursor = mydb.cursor()
+# Create function to add a new computer to the database
+def add_computer():
+    sql = "INSERT INTO computers (name, status) VALUES (%s, %s)"
+    val = (computer_name.get(), "Available")
+    mycursor.execute(sql, val)
+    mydb.commit()
+    computer_name.set("")
+    update_list()
+
+# Create function to update the status of a computer in the database
+def update_status():
+    selected_computer = computer_listbox.get(tk.ACTIVE)
+    sql = "UPDATE computers SET status = %s WHERE name = %s"
+    if selected_computer:
+        if selected_computer.endswith(" - Available"):
+            val = ("In Use", selected_computer[:-13])
+        else:
+            val = ("Available", selected_computer[:-8])
+        mycursor.execute(sql, val)
+        mydb.commit()
+        update_list()
+# Create function to update the computer listbox
+def update_list():
+    computer_listbox.delete(0, tk.END)
+    mycursor.execute("SELECT * FROM computers")
+    for computer in mycursor:
+        if computer[1] == "Available":
+            computer_listbox.insert(tk.END, computer[0] + " - Available")
+        else:
+            computer_listbox.insert(tk.END, computer[0] + " - In Use")
+
+# Create GUI window
+window = tk.Tk()
+window.title("Computer Management System")
+# Create computer name label and entry box
+computer_name_label = tk.Label(window, text="Computer Name:")
+computer_name_label.grid(row=0, column=0)
+computer_name = tk.StringVar()
+computer_name_entry = tk.Entry(window, textvariable=computer_name)
+computer_name_entry.grid(row=0, column=1)
+# Create add computer button
+add_button = tk.Button(window, text="Add Computer", command=add_computer)
+add_button.grid(row=1, column=0, columnspan=2)
+# Create computer listbox
+computer_listbox = tk.Listbox(window)
+computer_listbox.grid(row=2, column=0, columnspan=2)
+# Create update status button
+status_button = tk.Button(window, text="Update Status", command=update_status)
+status_button.grid(row=3, column=0, columnspan=2)
+# Update computer listbox
+update_list()
+# Start GUI loop
+window.mainloop()
+A.3. TIME MANAGEMENT MODULE:
+ import tkinter as tk
+import datetime as dt
+class TimeSystemModule(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Time System Module")
+        self.geometry("400x400")
+        # Create UI elements
+        self.label = tk.Label(self, text="Welcome to the Cybercafe Time System Module")
+        self.label.pack(pady=10)
+        self.start_time_button = tk.Button(self, text="Start Time", command=self.start_time)
+        self.start_time_button.pack(pady=10)
+        self.end_time_button = tk.Button(self, text="End Time", command=self.end_time)
+        self.end_time_button.pack(pady=5)
+        self.time_label = tk.Label(self, text="")
+        self.time_label.pack(pady=10)
+    def start_time(self):
+        # Record the current time as the start time
+        self.start_time = dt.datetime.now()
+        self.update_time_label()
+    def end_time(self):
+        # Calculate the duration between the start time and current time and display it
+        end_time = dt.datetime.now()
+        duration = end_time - self.start_time
+        duration_str = f"Session duration: {duration.seconds // 60} minutes and {duration.seconds % 60} seconds"
+        self.time_label.config(text=duration_str)
+    def update_time_label(self):
+        # Update the time label to display the elapsed time since the start time
+        elapsed_time = dt.datetime.now() - self.start_time
+        elapsed_time_str = f"Elapsed time: {elapsed_time.seconds // 60} minutes and {elapsed_time.seconds % 60} seconds"
+        self.time_label.config(text=elapsed_time_str)
+        self.after(1000, self.update_time_label)  # Call this function again after 1 second
+# Example usage
+app = TimeSystemModule()
+app.mainloop()
+
+A.4. BILLING AND PAYMENT MODULE:
+
+import tkinter as tk
+
+class BillingPaymentModule(tk.Tk):
+    def __init__(self, customer_name, service_name, price):
+        super().__init__()
+        self.title("Billing and Payment Module")
+        self.geometry("400x400")
+        self.customer_name = customer_name
+        self.service_name = service_name
+        self.price = price
+
+        # Create UI elements
+        self.label = tk.Label(self, text="Welcome to the Cybercafe Billing and Payment Module")
+        self.label.pack(pady=10)
+
+        self.customer_name_label = tk.Label(self, text=f"Customer Name: {customer_name}")
+        self.customer_name_label.pack(pady=5)
+
+        self.service_name_label = tk.Label(self, text=f"Service Name: {service_name}")
+        self.service_name_label.pack(pady=5)
+
+        self.price_label = tk.Label(self, text=f"Price: ${price}")
+        self.price_label.pack(pady=5)
+
+        self.pay_button = tk.Button(self, text="Pay", command=self.pay)
+        self.pay_button.pack(pady=10)
+
+    def pay(self):
+        # Update the customer's account balance and save the transaction
+        # Here we'll just display a message that the payment was successful
+        self.label.config(text="Payment Successful!")
+
+# Create an instance of the BillingPaymentModule
+app = BillingPaymentModule("John Doe", "Internet Access", 10)
+
+# Start the application
+app.mainloop()
+
+A.5. INVENTORY MANAGEMENT SYSTEM:
+
+import tkinter as tk
+class InventoryModule(tk.Tk):
+    def __init__(self, items):
+        super().__init__()
+        self.title("Inventory System Module")
+        self.geometry("400x400")
+        self.items = items
+        # Create UI elements
+        self.label = tk.Label(self, text="Welcome to the Cybercafe Inventory System Module")
+        self.label.pack(pady=10)
+        self.item_listbox = tk.Listbox(self, selectmode="single")
+        self.item_listbox.pack(pady=5)
+        for item in self.items:
+            self.item_listbox.insert(tk.END, item)
+        self.add_item_button = tk.Button(self, text="Add Item", command=self.add_item)
+        self.add_item_button.pack(pady=10)
+
+        self.remove_item_button=tk.Button(self,text="RemoveItem", command=self.remove_item)
+        self.remove_item_button.pack(pady=5)
+    def add_item(self):
+        # Open a dialog box to enter the new item and add it to the inventory
+        new_item = tk.simpledialog.askstring("Add Item", "Enter the name of the new item:")
+        if new_item:
+            self.items.append(new_item)
+            self.item_listbox.insert(tk.END, new_item)
+    def remove_item(self):
+        # Remove the selected item from the inventory
+        selected_item = self.item_listbox.curselection()
+        if selected_item:
+            item_index = selected_item[0]
+            item = self.item_listbox.get(item_index)
+            self.items.remove(item)
+            self.item_listbox.delete(item_index)
+# Example usage
+items = ["Computers", "Printers", "Scanners"]
+app = InventoryModule(items)
+app.mainloop()
+
+A.6. SECURITY MANAGEMNT MODULE:
+
+import tkinter as tk
+
+class SecurityManagementModule(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Security Management Module")
+        self.geometry("400x400")
+
+        # Create UI elements
+        self.label = tk.Label(self, text="Welcome to the Security Management Module")
+        self.label.pack(pady=10)
+
+        self.username_label = tk.Label(self, text="Username:")
+        self.username_label.pack(pady=5)
+        self.username_entry = tk.Entry(self)
+        self.username_entry.pack(pady=5)
+
+        self.password_label = tk.Label(self, text="Password:")
+        self.password_label.pack(pady=5)
+        self.password_entry = tk.Entry(self, show="*")
+        self.password_entry.pack(pady=5)
+
+        self.login_button = tk.Button(self, text="Login", command=self.login)
+        self.login_button.pack(pady=10)
+ 
+    def login(self):
+        # Check username and password
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+
+        if username == "admin" and password == "password":
+            self.label.config(text="Login Successful!")
+        else:
+            self.label.config(text="Invalid Username or Password")
+
+# Create an instance of the SecurityManagementModule
+app = SecurityManagementModule()
+
+# Start the application
+app.mainloop()
+
+MYSQL 
+
+CREATE DATABASE security;
+
+USE security;
+
+CREATE TABLE users (
+  id INT NOT NULL AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL,
+  password VARCHAR(50) NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE logs (
+  id INT NOT NULL AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  action VARCHAR(100) NOT NULL,
+  timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+
+
+
+
+
